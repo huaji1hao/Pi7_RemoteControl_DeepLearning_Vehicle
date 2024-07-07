@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ info.title }}</title>
+</head>
+<body>
+    <h1>{{ info.title }}</h1>
+    <p>Current Command Sent: <span id="current_command">{{ last_command if last_command else 'None' }}</span></p>
+    <p>Enter a command to send to Arduino:</p>
+    <form action="/" method="post">
+        <input type="text" name="command" autofocus>
+        <button type="submit">Send</button>
+    </form>
+    {% if response %}
+        <p>Arduino Response: {{ response }}</p>
+    {% endif %}
+</body>
+</html>
