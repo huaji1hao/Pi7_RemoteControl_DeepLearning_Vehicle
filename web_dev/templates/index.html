@@ -3,86 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ info.title }}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 20px;
-        }
-        .center-text {
-            text-align: center;
-            font-size: 1.2em;
-            color: #555;
-            margin-top: 20px;
-        }
-        form {
-            text-align: center;
-            margin: 20px 0;
-        }
-        input[type="text"] {
-            width: 100px;
-            padding: 10px;
-            font-size: 1.2em;
-            margin-right: 10px;
-            border: 2px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 1.2em;
-            color: #fff;
-            background-color: #007bff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .response {
-            display: inline-block;
-            margin-left: 20px;
-            font-size: 1.2em;
-            color: #333;
-        }
-        .image-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .image-container img {
-            width: 640px;
-            height: 480px;
-            border: 2px solid #ccc;
-            border-radius: 4px;
-        }
-    </style>
-    <script>
-        function limitInput(event) {
-            if (event.target.value.length > 1) {
-                event.target.value = event.target.value.slice(0, 1);
-            }
-        }
-
-        function sendCommand(event) {
-            event.preventDefault(); // 阻止表单默认提交行为
-
-            const command = document.getElementById("command_input").value;
-            document.getElementById("command_input").value = "";  // 立即清除输入框内容
-
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", "/send_command", true);
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    const jsonResponse = JSON.parse(xhr.responseText);
-                    document.getElementById("current_command").innerText = jsonResponse.last_command;
-                    document.getElementById("response").innerText = "Arduino Response: " + jsonResponse.response;
-                }
-            };
-            xhr.send("command=" + command);
-        }
-    </script>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="center-text">
@@ -100,4 +21,5 @@
         <button type="submit">Send</button>
     </form>
 </body>
+<script src="/static/script.js"></script>
 </html>
