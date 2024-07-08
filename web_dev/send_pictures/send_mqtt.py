@@ -12,12 +12,10 @@ def on_connect(client, userdata, flags, rc):
         print("Connected.")
         client.subscribe("Group07/IMAGE/predict")
     else:
-        print("Failed to connnect. Error code: ", rc)
+        print("Failed to connect. Error code: ", rc)
 
 def on_message(client, userdata, msg):
     print("Received message from server.")
-    resp_dict = json.loads(msg.payload)
-    print("Prediction: %s, Score: %3.4f" % (resp_dict["prediction"], float(resp_dict["score"])))
 
 def setup(hostname):
     client = mqtt.Client()
@@ -31,18 +29,18 @@ def setup(hostname):
 def load_image(filename):
     img = Image.open(filename)
     img = img.resize((249, 249))
-    imgarray = np.array(img)/255.0
+    imgarray = np.array(img) / 255.0
     finl = np.expand_dims(imgarray, axis=0)
     return finl
 
 def send_image(client, filename):
     img = load_image(filename)
     img_list = img.tolist()
-    send_dict = {"filename":filename, "data":img_list}
+    send_dict = {"filename": filename, "data": img_list}
     client.publish("Group07/IMAGE/classify", json.dumps(send_dict))
 
 def main():
-    client = setup("172.22.63.91")
+    client = setup("172.27.48.125")
     print("Sending data.")
     for file in listdir(PATH):
         send_image(client, join(PATH, file))
