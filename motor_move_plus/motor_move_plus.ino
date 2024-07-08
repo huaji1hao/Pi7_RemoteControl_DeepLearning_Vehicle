@@ -64,11 +64,14 @@ void loop() {
       isMoving = false;
       stopMotors();
     }
-  }
+
+
+ 
+
 
   // Execute continuous movement
   if (isMoving) {
-    int speed = 170; // Default speed for continuous movement
+    int speed = getSpeed(1);
     executeCommand(currentDirection, speed, -1); // -1 means continuous
   }
 }
@@ -78,11 +81,11 @@ void executeCommand(char command, int speed, int pulseCount) {
   switch (command) {
     case 'w':
     case 'W':
-      moveMotor(speed, pulseCount, BACKWARD, FORWARD);
+      moveMotor(speed, pulseCount, FORWARD, BACKWARD);
       break;
     case 's':
     case 'S':
-      moveMotor(speed, pulseCount, FORWARD, BACKWARD);
+      moveMotor(speed, pulseCount, BACKWARD, FORWARD);
       break;
     case 'a':
     case 'A':

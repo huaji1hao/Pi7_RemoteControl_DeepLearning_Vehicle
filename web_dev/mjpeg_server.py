@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-# This is the same as mjpeg_server.py, but uses the h/w MJPEG encoder.
-
 import io
 import logging
 import socketserver
@@ -24,7 +22,6 @@ PAGE = """\
 </html>
 """
 
-
 class StreamingOutput(io.BufferedIOBase):
     def __init__(self):
         self.frame = None
@@ -34,7 +31,6 @@ class StreamingOutput(io.BufferedIOBase):
         with self.condition:
             self.frame = buf
             self.condition.notify_all()
-
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -75,19 +71,17 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_error(404)
             self.end_headers()
 
-
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-
 picam2 = Picamera2()
-picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
+picam2.configure(picam2.create_video_configuration(main={"size": (480, 360)}))
 output = StreamingOutput()
 picam2.start_recording(MJPEGEncoder(), FileOutput(output))
 
 try:
-    address = ('', 8000)
+    address = ('', 5000)  # 改为端口 5000
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
 finally:
