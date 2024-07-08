@@ -14,12 +14,14 @@ import socketserver
 from http import server
 import threading
 from threading import Condition
+import os
+from shutil import copyfile
 
 from picamera2.encoders import MJPEGEncoder
 from picamera2.outputs import FileOutput
 
 # Configuration of the network
-server_address = '172.25.96.25'
+server_address = '172.25.96.208'
 image_port = '6000'
 
 pi_address = '172.25.96.195'
@@ -106,8 +108,13 @@ output = None
 # Send the camera image to the server 
 def send_image(file_path, server_url):
     current_time = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
+
+    local_save_path = os.path.join('send_pictures/images', f'{current_time}.jpg')
+    copyfile(file_path, local_save_path)
+
     with open(file_path, 'rb') as file:
         files = {'file': (f'{current_time}.jpg', file)}  # 使用当前时间作为文件名
+
         response = requests.post(server_url, files=files)
         print(response.text)
 
