@@ -7,6 +7,7 @@ import time
 from picamera2 import Picamera2, Preview, MappedArray
 import requests
 import datetime
+import sqlite3
 
 import io
 import logging
@@ -21,7 +22,7 @@ from picamera2.encoders import MJPEGEncoder
 from picamera2.outputs import FileOutput
 
 # Configuration of the network
-server_address = '172.25.96.208'
+server_address = '172.25.96.25'
 image_port = '6000'
 
 pi_address = '172.25.96.195'
@@ -132,13 +133,35 @@ def capture_photo():
 def root():
     return render_template('index.html', info={"title": "Team 7 Vehicle", "stream_url": stream_url}), 200
 
+def get_records():
+    # Connect to the SQLite database
+    conn = sqlite3.connect('./database/cats.db')
+    c = conn.cursor()
+
+    # Query to select all records from the records table
+    c.execute('SELECT * FROM records')
+
+    # Fetch all results from the executed query
+    rows = c.fetchall()
+
+    # Close the connection
+    conn.close()
+
+    # Convert to list of dictionaries
+    records = [{'id': row[0], 'filename': row[1], 'result': row[2]} for row in rows]
+    
+    return records
+
 @app.route('/send_command', methods=['POST'])
 def send_command():
     command = request.form['command']
     # Use 'p' to capture photos
     if command == 'p':
-     # Trigger camera capture
         response = capture_photo()
+    elif command == 'r':
+        # Connect to the SQLite database
+        records = get_records()
+        return jsonify({"last_command": command, "records": records})
     else:
         # send command to the vehicle's serial
         ser.write((command + '\n').encode('utf-8'))

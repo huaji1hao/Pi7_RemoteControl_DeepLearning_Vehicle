@@ -8,9 +8,9 @@ def send_image(file_path, server_url):
         response = requests.post(server_url, files=files)
         print(response.text)
 
-# server_url = 'http://172.25.96.208:5000/upload'
+server_url = 'http://172.25.96.208:5000/upload'
 # server_url = 'http://172.25.96.25:6000/upload'
-server_url = 'http://172.25.98.37:5000/upload'
+# server_url = 'http://172.25.98.37:5000/upload'
 
 file_path = './images/test.jpg'
 send_image(file_path, server_url)

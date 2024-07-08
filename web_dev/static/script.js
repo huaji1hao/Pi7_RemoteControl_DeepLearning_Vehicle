@@ -17,8 +17,23 @@ function sendCommand(event) {
         if (xhr.readyState === 4 && xhr.status === 200) {
             const jsonResponse = JSON.parse(xhr.responseText);
             document.getElementById("current_command").innerText = jsonResponse.last_command;
-            document.getElementById("response").innerText = "Arduino Response: " + jsonResponse.response;
+            if (jsonResponse.last_command === 'r') {
+                displayRecords(jsonResponse.records);  // 传递 jsonResponse.records
+            } else {
+                document.getElementById("response").innerText = "Arduino Response: " + jsonResponse.response;
+            }
         }
     };
     xhr.send("command=" + command);
+}
+
+function displayRecords(records) {
+    const recordsContainer = document.getElementById("records_container");
+    recordsContainer.innerHTML = "";
+
+    records.forEach(record => {
+        const recordElement = document.createElement("div");
+        recordElement.innerText = `ID: ${record.id}, Filename: ${record.filename}, Result: ${record.result}`;
+        recordsContainer.appendChild(recordElement);
+    });
 }
