@@ -18,9 +18,17 @@ from threading import Condition
 from picamera2.encoders import MJPEGEncoder
 from picamera2.outputs import FileOutput
 
-# target_server_url = 'http://172.25.96.208:5000/upload'
-target_server_url = 'http://172.25.98.37:5000/upload'
+# Configuration of the network
+server_address = '172.25.96.25'
+image_port = '6000'
 
+pi_address = '172.25.96.195'
+stream_port = '5000'
+
+target_server_url = f'http://{server_address}:{image_port}/upload'
+stream_url = f'http://{pi_address}:{stream_port}/stream.mjpg'
+
+# Streaming default website
 PAGE = """\
 <html>
 <head>
@@ -91,17 +99,11 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 app = Flask(__name__)
 # Initialize serial communication
 ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-
+# Global parameters
 picam2 = None
 output = None
 
-def capture_photo():  
-    file_path = 'send_pictures/images/carPhoto.jpg'
-    picam2.capture_file(file_path)
-    time.sleep(1)
-    send_image(file_path, target_server_url)
-    return "Photo captured successfully"
-
+# Send the camera image to the server 
 def send_image(file_path, server_url):
     current_time = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
     with open(file_path, 'rb') as file:
@@ -110,49 +112,60 @@ def send_image(file_path, server_url):
         print(response.text)
 
 
+# Capture photo and send it to server
+def capture_photo():  
+    file_path = 'send_pictures/images/carPhoto.jpg'
+    picam2.capture_file(file_path)
+    time.sleep(1)
+    send_image(file_path, target_server_url)
+    return "Photo captured successfully"
+
+
 @app.route('/', methods=['GET'])
 def root():
-    return render_template('index.html', info={"title": "Team 7 Vehicle"}), 200
+    return render_template('index.html', info={"title": "Team 7 Vehicle", "stream_url": stream_url}), 200
 
 @app.route('/send_command', methods=['POST'])
 def send_command():
     command = request.form['command']
+    # Use 'p' to capture photos
     if command == 'p':
      # Trigger camera capture
         response = capture_photo()
     else:
+        # send command to the vehicle's serial
         ser.write((command + '\n').encode('utf-8'))
         response = ser.readline().decode('utf-8').strip()
 
     return jsonify({"last_command": command, "response": response})
 
-
-
+# Launch the streaming server
 def run_streaming_server():
     address = ('', 5000)  # 改为端口 5000
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
 
+# Run the flask server
 def run_flask_app():
     app.run(port=3237, host="0.0.0.0")
 
 def main():
     global picam2, output
     
-    # 初始化摄像头
+    # Initialize the camera
     picam2 = Picamera2()
     picam2.configure(picam2.create_video_configuration(main={"size": (640,480)}))
     output = StreamingOutput()
     picam2.start_recording(MJPEGEncoder(), FileOutput(output))
 
-    # 创建并启动线程
+    # Create and launch the threads
     streaming_thread = threading.Thread(target=run_streaming_server)
     flask_thread = threading.Thread(target=run_flask_app)
 
     streaming_thread.start()
     flask_thread.start()
 
-    # 等待线程结束
+    # wait the thread to end
     streaming_thread.join()
     flask_thread.join()
 
