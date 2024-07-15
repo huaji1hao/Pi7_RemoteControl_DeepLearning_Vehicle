@@ -41,12 +41,22 @@ button:hover {
     color: #333;
 }
 .image-container {
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
     margin-top: 20px;
 }
-.image-container img {
-    width: 640px;
-    height: 480px;
+
+.image-left, .image-right {
+    width: 49%;
+}
+
+.image-left img, .image-right img {
+    width: 100%;
+    height: auto;
     border: 2px solid #ccc;
     border-radius: 4px;
+}
+
+.records-container {
+    margin-top: 20px;
 }

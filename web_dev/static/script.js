@@ -1,6 +1,6 @@
 function limitInput(event) {
-    if (event.target.value.length > 1) {
-        event.target.value = event.target.value.slice(0, 1);
+    if (event.target.value.length > 2) {
+        event.target.value = event.target.value.slice(0, 2);
     }
 }
 

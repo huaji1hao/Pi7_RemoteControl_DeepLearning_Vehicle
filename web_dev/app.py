@@ -25,11 +25,12 @@ from picamera2.outputs import FileOutput
 server_address = '172.25.96.25'
 image_port = '6000'
 
-pi_address = '172.25.96.195'
+pi_address = '172.25.104.92'
 stream_port = '5000'
 
 target_server_url = f'http://{server_address}:{image_port}/upload'
-stream_url = f'http://{pi_address}:{stream_port}/stream.mjpg'
+stream_url1 = f'http://{pi_address}:{stream_port}/stream.mjpg'
+stream_url2 = 'http://172.25.107.64:5000/video_feed'
 
 # Streaming default website
 PAGE = """\
@@ -131,7 +132,7 @@ def capture_photo():
 
 @app.route('/', methods=['GET'])
 def root():
-    return render_template('index.html', info={"title": "Team 7 Vehicle", "stream_url": stream_url}), 200
+    return render_template('index.html', info={"title": "Team 7 Vehicle", "stream_url1": stream_url1, "stream_url2": stream_url2}), 200
 
 def get_records():
     # Connect to the SQLite database
@@ -158,7 +159,7 @@ def send_command():
     # Use 'p' to capture photos
     if command == 'p':
         response = capture_photo()
-    elif command == 'r':
+    elif command == 'save':
         # Connect to the SQLite database
         records = get_records()
         return jsonify({"last_command": command, "records": records})
