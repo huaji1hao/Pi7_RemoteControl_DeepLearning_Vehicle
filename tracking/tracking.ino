@@ -26,6 +26,8 @@ int sensor[3] = {0, 0, 0};
 int state = stop_car;
 int red_light_flag = 0;
 int junction_cnt = 0;
+int facing_flag = 0;
+int error =0;
 
 typedef struct {
     int junction;
@@ -38,6 +40,9 @@ junctionInfo ac[10];
 junctionInfo ad[10];
 junctionInfo ae[10];
 junctionInfo af[10];
+
+int dijstra[20];
+int dj_cnt = 0;
 
 junctionInfo* current_path = NULL;
 char current_path_name[3] = {'\0', '\0', '\0'}; // 初始化为空路径
@@ -102,8 +107,31 @@ void read_sensor_values() {
         current_path_name[2] = '\0'; // 确保末尾是空字符
         set_current_path(); // 设置当前路径
         state = go_forward; // 开始运动
-      } else {
+      } else if(input.length() == 1) {
         command = input.charAt(0);
+      } else{
+        if (input.startsWith("[") && input.endsWith("]")) {
+            input = input.substring(1, input.length() - 1); // 去掉开头和结尾的方括号
+            int index = 0;
+            while (input.length() > 0) {
+                int commaIndex = input.indexOf(',');
+                if (commaIndex == -1) {
+                    // 处理最后一个元素
+                    int dir = input.toInt();
+                    dijstra[index] = dir;
+                    break;
+                }
+                String token = input.substring(0, commaIndex);
+                int dir = token.toInt();
+                dijstra[index] = dir;
+                facing_flag = 0;
+                input = input.substring(commaIndex + 1);
+                index++;
+            }
+            current_path = ab;
+            dj_cnt = 0;
+            Serial.println("dijstra driving");
+        }
       }
     }
 
@@ -128,19 +156,40 @@ void read_sensor_values() {
         red_light_flag = 0; // green light
         Serial.println("command driving: green light, go");
     } else if (current_path != NULL && 
-               sensor[0] == 0 && sensor[1] == 1 && sensor[2] == 0) {
+               sensor[0] == 0 && sensor[2] == 0) {
         if(red_light_flag == 1) state = stop_car; // red light
         else state = go_forward; // middle sensor detects black line
     } else if (current_path != NULL && 
-               sensor[0] == 1 && sensor[1] == 1 && sensor[2] == 1) {
-        // left or right sensor detects black line
-        stopMotors();
+        sensor[0] == 1 && sensor[2] == 1) {
         delay(500);
-        execute_path(junction_cnt++); // 执行当前路径
-    } else if (sensor[0] == 0 && sensor[1] == 0 && sensor[2] == 0){
-        state = stop_car;
-    } 
-    else {
+        if(dj_cnt > 9){
+            state = stop_car;
+            return;
+        }
+        int instruction = (dijstra[dj_cnt++] + facing_flag) % 4;
+        if(instruction == 1) facing_flag--;
+        else if(instruction == 3) facing_flag++;
+        
+        if(instruction == 0){
+            state = go_forward;
+        } else if(instruction == 1){
+            state = turn_right;
+        } else if(instruction == 2){
+            state = slow_down;
+        } else if(instruction == 3){
+            state = turn_left;
+        }
+
+    } else if (current_path != NULL && 
+               sensor[0] == 1  && sensor[2] == 0) {
+        // left or right sensor detects black line
+        delay(100);
+        error=2;
+    } else if (current_path != NULL && 
+               sensor[0] == 0  && sensor[2] == 1) {
+        delay(100);
+        error=-2;
+    } else {
         state = stop_car;
     }
 }
@@ -202,8 +251,6 @@ void pid_control() {
     integral += error;
     double derivative = error - lastError;
     double correction = Kp * error + Ki * integral + Kd * derivative;
-    
-    Serial.println(correction);
 
     int baseSpeed = getSpeed(2);
     int leftMotorSpeed = baseSpeed + correction;
@@ -235,7 +282,7 @@ void stopMotors() {
 int getSpeed(int speedSetting) {
   switch (speedSetting) {
     case 1:
-      return 42; // Slow speed
+      return 60; // Slow speed
     case 2:
       return 85; // Medium speed
     case 3:
