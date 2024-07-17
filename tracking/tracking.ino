@@ -161,7 +161,8 @@ void read_sensor_values() {
         else state = go_forward; // middle sensor detects black line
     } else if (current_path != NULL && 
         sensor[0] == 1 && sensor[2] == 1) {
-        delay(500);
+        stopMotors();
+        delay(600);
         if(dj_cnt > 9){
             state = stop_car;
             return;
@@ -183,12 +184,16 @@ void read_sensor_values() {
     } else if (current_path != NULL && 
                sensor[0] == 1  && sensor[2] == 0) {
         // left or right sensor detects black line
+        stopMotors();
         delay(100);
-        error=2;
+        turnMotorbyTime(getSpeed(3), FORWARD, BACKWARD, 50);
+        state=go_forward;
     } else if (current_path != NULL && 
                sensor[0] == 0  && sensor[2] == 1) {
+        stopMotors();
         delay(100);
-        error=-2;
+        turnMotorbyTime(getSpeed(3), BACKWARD, FORWARD, 50);
+        state=go_forward;
     } else {
         state = stop_car;
     }
@@ -237,7 +242,8 @@ void motor_control() {
     } else if(state == turn_right) {
         turnMotor(getSpeed(3), BACKWARD, FORWARD);
     } else if (state == go_forward) {
-        pid_control();
+        // pid_control();
+        moveMotor(getSpeed(2), getSpeed(2), BACKWARD, FORWARD);
     } else if (state == slow_down) {
         moveMotor(getSpeed(1), getSpeed(1), BACKWARD, FORWARD);
     }
@@ -284,7 +290,7 @@ int getSpeed(int speedSetting) {
     case 1:
       return 60; // Slow speed
     case 2:
-      return 85; // Medium speed
+      return 70; // Medium speed
     case 3:
       return 170; // Full speed
     default:
@@ -303,6 +309,21 @@ int getSpeed(int speedSetting) {
   motor3.run(rightDir);
 
   delay(650); // 调整这个延迟以实现完美的90度转弯
+
+  stopMotors();
+}
+
+void turnMotorbyTime(int speed, uint8_t leftDir, uint8_t rightDir, int time) {
+  motor1.setSpeed(speed);
+  motor1.run(leftDir);
+  motor4.setSpeed(speed);
+  motor4.run(rightDir);
+  motor2.setSpeed(speed);
+  motor2.run(leftDir);
+  motor3.setSpeed(speed);
+  motor3.run(rightDir);
+
+  delay(time); // 调整这个延迟以实现完美的90度转弯
 
   stopMotors();
 }
