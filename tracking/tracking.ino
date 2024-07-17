@@ -43,6 +43,7 @@ junctionInfo af[10];
 
 int dijstra[20];
 int dj_cnt = 0;
+int junc_indexes = 0;
 
 junctionInfo* current_path = NULL;
 char current_path_name[3] = {'\0', '\0', '\0'}; // 初始化为空路径
@@ -112,21 +113,20 @@ void read_sensor_values() {
       } else{
         if (input.startsWith("[") && input.endsWith("]")) {
             input = input.substring(1, input.length() - 1); // 去掉开头和结尾的方括号
-            int index = 0;
+            junc_indexes = 0;
             while (input.length() > 0) {
                 int commaIndex = input.indexOf(',');
                 if (commaIndex == -1) {
                     // 处理最后一个元素
                     int dir = input.toInt();
-                    dijstra[index] = dir;
+                    dijstra[junc_indexes] = dir;
                     break;
                 }
                 String token = input.substring(0, commaIndex);
                 int dir = token.toInt();
-                dijstra[index] = dir;
+                dijstra[junc_indexes++] = dir;
                 facing_flag = 0;
                 input = input.substring(commaIndex + 1);
-                index++;
             }
             current_path = ab;
             dj_cnt = 0;
@@ -163,7 +163,7 @@ void read_sensor_values() {
         sensor[0] == 1 && sensor[2] == 1) {
         stopMotors();
         delay(600);
-        if(dj_cnt > 9){
+        if(dj_cnt > 9 || dj_cnt > junc_indexes){
             state = stop_car;
             return;
         }
