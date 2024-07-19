@@ -10,10 +10,17 @@
 #define middle_track_PIN 24
 #define right_track_PIN 52
 
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+
 AF_DCMotor motor1(1);  
 AF_DCMotor motor2(2);  
 AF_DCMotor motor3(3);  
 AF_DCMotor motor4(4);  
+
+unsigned long startTime = 0;
+unsigned long duration = 0;
+bool isMoving = false;
+bool indefiniteMove = false;
 
 int sensor[3] = {0, 0, 0};     
 
@@ -23,41 +30,60 @@ void setup() {
 }
 
 void loop() {
+  // Check for serial input
   if (Serial.available() > 0) {
-    if (Serial.available() > 0) {
-      String input = Serial.readStringUntil('\n');
-      parseCommand(input);
+    String input = Serial.readStringUntil('\n'); // Read input from serial
+    parseCommand(input); // Parse the received command
+  }
+
+  // Check if the motor should stop after the duration
+  if (isMoving && !indefiniteMove) {
+    if (millis() - startTime >= duration) {
+      stopMotors();
+      isMoving = false;
     }
+  }
+
+  double front_distance = sonar.ping_cm();
+  if(front_distance > 0 && front_distance < 10) {
+    stopMotors();
+    isMoving = false;
+    indefiniteMove = false;
   }
 }
 
+// Parse the received command
 void parseCommand(String input) {
   if (input.length() == 1) {
+    // Handle single character commands
     char command = input.charAt(0);
     handleSingleCharacterCommand(command);
   } else if (input.startsWith("read_sensors")) {
+    // Handle read sensor command
     readSensors();
   } else {
+    // Handle motor commands
     parseMotorCommand(input);
   }
 }
 
-// 处理单字符命令
+// Handle single character commands
 void handleSingleCharacterCommand(char command) {
-  int speed = getSpeed(2);
+  int speed = getSpeed(2); // Default speed
 
   if (command == 'w' || command == 's' || command == 'a' || command == 'd') {
     stopMotors();
     executeCommand(command, speed);
   } else if (command == 'x' || command == 'X') {
     stopMotors();
-  } else if(command == 'y'){
+  } else if (command == 'y') {
+    // Do nothing, just a placeholder
   } else {
     Serial.println("Invalid single character");
   }
 }
 
-// 读取传感器值
+// Read sensor values and print to serial
 void readSensors() {
   sensor[0] = digitalRead(left_track_PIN);
   sensor[1] = digitalRead(middle_track_PIN);
@@ -70,8 +96,7 @@ void readSensors() {
   Serial.println(sensor[2]);
 }
 
-
-// 解析电机命令
+// Parse motor commands
 void parseMotorCommand(String input) {
   int firstComma = input.indexOf(',');
   int secondComma = input.indexOf(',', firstComma + 1);
@@ -97,13 +122,13 @@ void parseMotorCommand(String input) {
       Serial.print(", time: ");
       Serial.println(time);
       turn_right(speed, time);
-    } else if (motor == "f"){
+    } else if (motor == "f") {
       Serial.print("go forward, speed: ");
       Serial.print(speed);
       Serial.print(", time: ");
       Serial.println(time);
       go_forward(speed, time);
-    } else if (motor == "b"){
+    } else if (motor == "b") {
       Serial.print("go back, speed: ");
       Serial.print(speed);
       Serial.print(", time: ");
@@ -114,7 +139,6 @@ void parseMotorCommand(String input) {
     Serial.println("Invalid motor command format");
   }
 }
-
 
 // Execute movement or turn based on command
 void executeCommand(char command, int speed) {
@@ -137,7 +161,6 @@ void executeCommand(char command, int speed) {
       break;
   }
 }
-
 
 // Stop all motors
 void stopMotors() {
@@ -173,22 +196,28 @@ int getSpeed(int speedSetting) {
   }
 }
 
+// Turn left with speed and time
 void turn_left(int speed, int time) {
-    motor1.setSpeed(speed);
-    motor1.run(FORWARD);
-    motor4.setSpeed(speed);
-    motor4.run(BACKWARD);
-    motor2.setSpeed(speed);
-    motor2.run(FORWARD);
-    motor3.setSpeed(speed);
-    motor3.run(BACKWARD);
+  motor1.setSpeed(speed);
+  motor1.run(FORWARD);
+  motor4.setSpeed(speed);
+  motor4.run(BACKWARD);
+  motor2.setSpeed(speed);
+  motor2.run(FORWARD);
+  motor3.setSpeed(speed);
+  motor3.run(BACKWARD);
 
-  if(time != -1){
-    delay(time);
-    stopMotors();
+  if (time == -1) {
+    indefiniteMove = true;
+  } else {
+    startTime = millis();
+    duration = time;
+    isMoving = true;
+    indefiniteMove = false;
   }
 }
 
+// Turn right with speed and time
 void turn_right(int speed, int time) {
   motor1.setSpeed(speed);
   motor1.run(BACKWARD);
@@ -199,40 +228,54 @@ void turn_right(int speed, int time) {
   motor3.setSpeed(speed);
   motor3.run(FORWARD);
 
-  if(time != -1){
-    delay(time);
-    stopMotors();
+  if (time == -1) {
+    indefiniteMove = true;
+  } else {
+    startTime = millis();
+    duration = time;
+    isMoving = true;
+    indefiniteMove = false;
   }
 }
 
+// Go forward with speed and time
 void go_forward(int speed, int time) {
-    motor1.setSpeed(speed);
-    motor1.run(BACKWARD);
-    motor4.setSpeed(speed);
-    motor4.run(FORWARD);
-    motor2.setSpeed(speed);
-    motor2.run(FORWARD);
-    motor3.setSpeed(speed);
-    motor3.run(BACKWARD);
+  motor1.setSpeed(speed);
+  motor1.run(BACKWARD);
+  motor4.setSpeed(speed);
+  motor4.run(FORWARD);
+  motor2.setSpeed(speed);
+  motor2.run(FORWARD);
+  motor3.setSpeed(speed);
+  motor3.run(BACKWARD);
 
-  if(time != -1){
-    delay(time);
-    stopMotors();
+  if (time == -1) {
+    indefiniteMove = true;
+  } else {
+    startTime = millis();
+    duration = time;
+    isMoving = true;
+    indefiniteMove = false;
   }
 }
 
+// Go back with speed and time
 void go_back(int speed, int time) {
-    motor1.setSpeed(speed);
-    motor1.run(FORWARD);
-    motor4.setSpeed(speed);
-    motor4.run(BACKWARD);
-    motor2.setSpeed(speed);
-    motor2.run(BACKWARD);
-    motor3.setSpeed(speed);
-    motor3.run(FORWARD);
+  motor1.setSpeed(speed);
+  motor1.run(FORWARD);
+  motor4.setSpeed(speed);
+  motor4.run(BACKWARD);
+  motor2.setSpeed(speed);
+  motor2.run(BACKWARD);
+  motor3.setSpeed(speed);
+  motor3.run(FORWARD);
 
-  if(time != -1){
-    delay(time);
-    stopMotors();
+  if (time == -1) {
+    indefiniteMove = true;
+  } else {
+    startTime = millis();
+    duration = time;
+    isMoving = true;
+    indefiniteMove = false;
   }
 }

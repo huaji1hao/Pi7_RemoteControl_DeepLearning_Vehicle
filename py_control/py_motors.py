@@ -114,5 +114,9 @@ def read_sensors():
 # stop_motors()
 
 # 读取传感器值
-sensor_values = read_sensors() # 这个函数返回值是一个数组，可以直接调用
-print("Sensor values:", sensor_values[0])
+# sensor_values = read_sensors() # 这个函数返回值是一个数组，可以直接调用
+# print("Sensor values:", sensor_values[0])
+
+# 打断上一条命令测试
+# turn_left(200, -1)
+small_turn_right()
